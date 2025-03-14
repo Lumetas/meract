@@ -63,8 +63,13 @@ php index.php
 И так, вот все примеры синтаксиса роутеров:
 ```
 Route::get('/', function(Request $rq) {
-	$h = IterateController::get();
-	return new Response($h, 200);
+	$content = View::render("main", [
+		"title" => "example lumframework project",
+		"value" => IterateController::get()
+	]);
+	$r = new Response($content, 200);
+	$r->header("Content-Type", "text/html");
+	return $r;
 });
 
 Route::get('/add/{num}', [IterateController::class, "add"]);
@@ -79,21 +84,59 @@ Route::notFound(function(Request $rq) {
 ```
 И контроллер используемый тут:
 ```
-class IterateController {
+class IterateController extends Controller{
 	private static $i = 0;
 	public static function add($rq, $arr) {
 		self::$i += $arr["num"];
-		return new Response("value added", 200);
+		return self::prepare_html("value added");
 	}
 	public static function get(): int{
 		return self::$i;
 	}
 	public static function rem($rq, $arr) {
 		self::$i -= $arr["num"];
-		return new Response("value removed", 200);
+		return self::prepare_html("value removed");
 	}
 }
+
 ```
 Мы можем передать в роутер путь, и коллбэк функцию, так же как и метода контроллера. Так же мы можем установить маршрут для ошибки 404 и директорию для статичных файлов.
 
+Статический метода prepare_html который предоставляет класс Controller принимает html и возвращает, объект класса Response с установленным заголовком `Content-Type : text/html`, просто сокращает ненужный код в контроллерах.
+
 Работает это следующим образом, когда приходит запрос, сервер сначала ищет по прописанным напрямую маршрутам, если не находит и имеется указанная статичная директория, ищет в ней. Если она не указана и/или такого файла нет, выполняется маршрут 404. Если он не установлен тогда пользователь просто увидит "not found"
+
+## view
+Шаблоны позволяют упрощать вывод. Синтаксис такой.
+```
+$content = View::render("main", [
+    "property1" => "value1",
+    "property2" => "value2"
+]);
+```
+Данный метод рендерит указанный шаблон в html с переданными ему параметрами и возвращает этот самый html который вы может уже использовать на своё усмотрение. Пример есть в контроллерах выше.
+Находясь в контроллере можно обернуть в prepare_html и сразу же вернуть.
+```
+return prepare_html($content = View::render("main", [
+    "property1" => "value1",
+    "property2" => "value2"
+]));
+```
+### Синтаксис view
+Вот самый основной синтаксис:
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= $property1 ?></title>
+</head>
+<body>
+    <h1>Welcome!</h1>
+	<p>Your value: <?= $property2; ?></p>
+</body>
+</html>
+```
+## Модели
+Особого синтаксиса у моделей нет. Поскольку данный фреймворк это не швейцарский нож с ORM и всем всем всем. Его цель это быстрый, маленький, аккуратный backend, например для сайта на 2-3 страницы.
