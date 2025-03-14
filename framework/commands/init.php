@@ -9,7 +9,7 @@ function run() {
 		PROJECT_DIR.'/app/models',
 		PROJECT_DIR.'/app/routes',
 		PROJECT_DIR.'/app/views',
-		PROJECT_DIR.'/public/static',
+		PROJECT_DIR.'/static',
 	];
 
 	// Файлы, которые должны быть созданы (если их нет)
