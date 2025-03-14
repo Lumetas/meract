@@ -1,6 +1,5 @@
 <?php
 function run() {
-	echo __DIR__;
 	// Папки, которые должны быть созданы
 	$requiredDirectories = [
 		PROJECT_DIR.'/framework/commands',
