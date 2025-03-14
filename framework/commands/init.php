@@ -3,20 +3,20 @@ function run() {
 	echo __DIR__;
 	// Папки, которые должны быть созданы
 	$requiredDirectories = [
-		PROJECT_DIR.'framework/commands',
-		PROJECT_DIR.'framework/core',
-		PROJECT_DIR.'app/controllers',
-		PROJECT_DIR.'app/models',
-		PROJECT_DIR.'app/routes',
-		PROJECT_DIR.'app/views',
-		PROJECT_DIR.'public/static',
+		PROJECT_DIR.'/framework/commands',
+		PROJECT_DIR.'/framework/core',
+		PROJECT_DIR.'/app/controllers',
+		PROJECT_DIR.'/app/models',
+		PROJECT_DIR.'/app/routes',
+		PROJECT_DIR.'/app/views',
+		PROJECT_DIR.'/public/static',
 	];
 
 	// Файлы, которые должны быть созданы (если их нет)
 	$requiredFiles = [
-		'index.php' => "<?php\n\n// Your index.php content here\n",
-		'public/index.php' => "<?php\n\n// Your public/index.php content here\n",
-		'console.php' => "<?php\n\n// Your console.php content here\n",
+		/* 'index.php' => "<?php\n\n// Your index.php content here\n", */
+		/* 'public/index.php' => "<?php\n\n// Your public/index.php content here\n", */
+		/* 'console.php' => "<?php\n\n// Your console.php content here\n", */
 	];
 
 	// Функция для создания директории, если её нет
