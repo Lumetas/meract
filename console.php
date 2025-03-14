@@ -7,7 +7,7 @@ require __DIR__ . '/vendor/autoload.php';
 if (php_sapi_name() !== 'cli') {
     die('This script can only be run from the command line.');
 }
-
+define("PROJECT_DIR", __DIR__);
 // Проверяем, передан ли аргумент
 if ($argc < 2) {
     die("Usage: php console.php <command>\n");
@@ -25,7 +25,7 @@ if (!file_exists($commandFile)) {
 }
 
 // Подключаем файл команды
-require $commandFile;
+include $commandFile;
 
 // Запускаем команду (предполагаем, что в файле команды есть функция run())
 if (function_exists('run')) {

@@ -1,14 +1,15 @@
 <?php
 function run() {
+	echo __DIR__;
 	// Папки, которые должны быть созданы
 	$requiredDirectories = [
-		'framework/commands',
-		'framework/core',
-		'app/controllers',
-		'app/models',
-		'app/routes',
-		'app/views',
-		'public/static',
+		PROJECT_DIR.'framework/commands',
+		PROJECT_DIR.'framework/core',
+		PROJECT_DIR.'app/controllers',
+		PROJECT_DIR.'app/models',
+		PROJECT_DIR.'app/routes',
+		PROJECT_DIR.'app/views',
+		PROJECT_DIR.'public/static',
 	];
 
 	// Файлы, которые должны быть созданы (если их нет)
@@ -40,12 +41,12 @@ function run() {
 
 	// Создаём все необходимые директории
 	foreach ($requiredDirectories as $dir) {
-		createDirectory(__DIR__ . '/' . $dir);
+		createDirectory($dir);
 	}
 
 	// Создаём все необходимые файлы
 	foreach ($requiredFiles as $file => $content) {
-		createFile(__DIR__ . '/' . $file, $content);
+		createFile($file, $content);
 	}
 
 	echo "Setup completed!\n";
