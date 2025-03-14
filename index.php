@@ -1,26 +1,36 @@
-<?php 
-include "Server.php";
-include "RequestLogger.php";
-include "Route.php";
+<?php
 
-$i = 0;
+// Подключаем автозагрузку Composer
+require __DIR__ . '/vendor/autoload.php';
 
+// Подключаем файлы из framework/core
+requireFilesRecursively(__DIR__ . '/framework/core');
+
+// Инициализация сервера
 Route::setServer(new Server('0.0.0.0', 80), new RequestLogger);
 
-Route::get('/', function(Request $rq) {
-	$GLOBALS["i"] += 1;
-	/* var_dump($rq); */
-	return new Response("is a main page $GLOBALS[i]", 200);
-});
+// Подключаем пользовательские файлы (контроллеры, модели и т.д.)
+requireFilesRecursively(__DIR__ . '/app/models');
+requireFilesRecursively(__DIR__ . '/app/controllers');
 
-Route::get('/test', function(Request $rq) {
-	return new Response("is a test page", 200);
-});
+// Подключаем роуты
+requireFilesRecursively(__DIR__ . '/app/routes');
 
-Route::notFound(function(Request $rq) {
-	return new Response('is a "TI DOLBOEB PAGE NOT FOUND"', 404);
-});
-
+// Запуск сервера
 Route::startHandling(function () {
-	echo "Server started!\n";
+    echo "Server started!\n";
 });
+
+/**
+ * Рекурсивно подключает все PHP-файлы из указанной директории.
+ *
+ * @param string $directory Путь к директории.
+ */
+function requireFilesRecursively($directory) {
+    $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory));
+    foreach ($iterator as $file) {
+        if ($file->isFile() && $file->getExtension() === 'php') {
+            require $file->getPathname();
+        }
+    }
+}
