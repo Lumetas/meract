@@ -2,10 +2,13 @@
 include "Server.php";
 include "Route.php";
 
+$i = 0;
+
 Route::setServer(new Server('0.0.0.0', 80));
 
 Route::get('/', function(Request $rq) {
-    return new Response("is a main page", 200);
+	$GLOBALS["i"] += 1;
+    return new Response("is a main page $GLOBALS[i]", 200);
 });
 
 Route::get('/test', function(Request $rq) {
