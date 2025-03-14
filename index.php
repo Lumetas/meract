@@ -18,6 +18,6 @@ class HUI {
 	}
 
 }
-$server = new Server( '0.0.0.0', 80 );
+$server = new Server( '0.0.0.0', 80);
 
-$server->listen([HUI::class, 'penis']);
+$server->listen([HUI::class, 'penis'], function () {echo "server started";});

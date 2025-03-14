@@ -2,47 +2,47 @@
 class Server 
 {
 	/**
-	 * The current host
+	 * Текущий хост
 	 *
 	 * @var string
 	 */
 	protected $host = null;
-	
+
 	/**
-	 * The current port
+	 * Текущий порт
 	 *
 	 * @var int
 	 */
 	protected $port = null;
-	
+
 	/**
-	 * The binded socket
+	 * Привязанный сокет
 	 * 
 	 * @var resource
 	 */
 	protected $socket = null;
-	
+
 	/**
-	 * Construct new Server instance
+	 * Конструктор нового экземпляра Server
 	 * 
-	 * @param string 			$host
-	 * @param int 				$port
+	 * @param string       $host
+	 * @param int         $port
 	 * @return void
 	 */
-	public function __construct( $host, $port )
+	public function __construct( $host, $port)
 	{
 		$this->host = $host;
 		$this->port = (int) $port;
-		
-		// create a socket
+
+		// создаем сокет
 		$this->createSocket();
-		
-		// bind the socket
+
+		// привязываем сокет
 		$this->bind();
 	}
-	
+
 	/**
-	 *  Create new socket resource 
+	 * Создание нового ресурса сокета
 	 *
 	 * @return void
 	 */
@@ -50,9 +50,9 @@ class Server
 	{
 		$this->socket = socket_create( AF_INET, SOCK_STREAM, 0 );
 	}
-	
+
 	/**
-	 * Bind the socket resourece
+	 * Привязка ресурса сокета
 	 *
 	 * @throws ClanCats\Station\PHPServer\Exception
 	 * @return void
@@ -64,76 +64,76 @@ class Server
 			throw new Exception( 'Could not bind: '.$this->host.':'.$this->port.' - '.socket_strerror( socket_last_error() ) );
 		}
 	}
-	
+
 	/**
-	 * Listen for requests 
+	 * Ожидание запросов
 	 *
-	 * @param callable 				$callback
+	 * @param callable         $callback
 	 * @return void 
 	 */
-	public function listen( $callback )
+	public function listen( $callback, $init_callback )
 	{
-		// check if the callback is valid
+		if (is_callable($init_callback)) {
+			$init_callback();
+		}
+		// проверяем, является ли callback допустимым
 		if ( !is_callable( $callback ) )
 		{
-			throw new Exception( 'The given argument should be callable.' );
+			throw new Exception( 'Переданный аргумент должен быть вызываемым.' );
 		}
-		
+
 		while ( 1 ) 
 		{
-			// listen for connections
+			// ожидаем соединений
 			socket_listen( $this->socket );
-			
-			// try to get the client socket resource
-			// if false we got an error close the connection and continue
+
+			// пытаемся получить ресурс сокета клиента
+			// если false, произошла ошибка, закрываем соединение и продолжаем
 			if ( !$client = socket_accept( $this->socket ) ) 
 			{
 				socket_close( $client ); continue;
 			}
-			
-			// create new request instance with the clients header.
-			// In the real world of course you cannot just fix the max size to 1024..
+
+			// создаем новый экземпляр запроса с заголовком клиента.
+			// В реальном мире, конечно, нельзя просто фиксировать максимальный размер в 1024..
 			$request = Request::withHeaderString( socket_read( $client, 1024 ) );
-			
-			// execute the callback 
+
+			// выполняем callback
 			$response = call_user_func( $callback, $request );
-			
-			// check if we really recived an Response object
-			// if not return a 404 response object
+
+			// проверяем, действительно ли мы получили объект Response
+			// если нет, возвращаем объект Response с ошибкой 404
 			if ( !$response || !$response instanceof Response )
 			{
 				$response = Response::error( 404 );
 			}
-			
-			// make a string out of our response
+
+			// преобразуем наш ответ в строку
 			$response = (string) $response;
-			
-			// write the response to the client socket
+
+			// записываем ответ в сокет клиента
 			socket_write( $client, $response, strlen( $response ) );
-			
-			// close the connetion so we can accept new ones
+
+			// закрываем соединение, чтобы можно было принимать новые
 			socket_close( $client );
 		}
 	}
 }
 
 
-
-
-
 class Response 
 {
 	/**
-	 * An array of the available HTTP response codes
+	 * Массив доступных HTTP-кодов ответов
 	 *
 	 * @var array
 	 */
 	protected static $statusCodes = [
-		// Informational 1xx
+		// Информационные 1xx
 		100 => 'Continue',
 		101 => 'Switching Protocols',
-	
-		// Success 2xx
+
+		// Успешные 2xx
 		200 => 'OK',
 		201 => 'Created',
 		202 => 'Accepted',
@@ -141,18 +141,18 @@ class Response
 		204 => 'No Content',
 		205 => 'Reset Content',
 		206 => 'Partial Content',
-	
-		// Redirection 3xx
+
+		// Перенаправления 3xx
 		300 => 'Multiple Choices',
 		301 => 'Moved Permanently',
 		302 => 'Found', // 1.1
 		303 => 'See Other',
 		304 => 'Not Modified',
 		305 => 'Use Proxy',
-		// 306 is deprecated but reserved
+		// 306 устарел, но зарезервирован
 		307 => 'Temporary Redirect',
-	
-		// Client Error 4xx
+
+		// Ошибки клиента 4xx
 		400 => 'Bad Request',
 		401 => 'Unauthorized',
 		402 => 'Payment Required',
@@ -171,8 +171,8 @@ class Response
 		415 => 'Unsupported Media Type',
 		416 => 'Requested Range Not Satisfiable',
 		417 => 'Expectation Failed',
-	
-		// Server Error 5xx
+
+		// Ошибки сервера 5xx
 		500 => 'Internal Server Error',
 		501 => 'Not Implemented',
 		502 => 'Bad Gateway',
@@ -181,9 +181,9 @@ class Response
 		505 => 'HTTP Version Not Supported',
 		509 => 'Bandwidth Limit Exceeded'
 	];
-	
+
 	/**
-	 * Returns a simple response based on a status code
+	 * Возвращает простой ответ на основе статусного кода
 	 *
 	 * @param int			$status
 	 * @return Response
@@ -192,30 +192,30 @@ class Response
 	{
 		return new static( "<h1>PHPServer: ".$status." - ".static::$statusCodes[$status]."</h1>", $status );
 	}
-	
+
 	/**
-	 * The current response status
+	 * Текущий статус ответа
 	 *
 	 * @var int
 	 */
 	protected $status = 200;
-	
+
 	/**
-	 * The current response body
+	 * Текущее тело ответа
 	 *
 	 * @var string
 	 */
 	protected $body = '';
-	
+
 	/**
-	 * The current response headers
+	 * Текущие заголовки ответа
 	 *
 	 * @var array
 	 */
 	protected $headers = [];
-	
+
 	/**
-	 * Construct a new Response object
+	 * Конструктор нового объекта Response
 	 *
 	 * @param string 		$body
 	 * @param int 			$status
@@ -227,14 +227,14 @@ class Response
 		{
 			$this->status = $status;
 		}
-		
+
 		$this->body = $body;
-		
-		// set inital headers
+
+		// установка начальных заголовков
 	}
-	
+
 	/**
-	 * Return the response body
+	 * Возвращает тело ответа
 	 *
 	 * @return string
 	 */
@@ -242,9 +242,9 @@ class Response
 	{
 		return $this->body;
 	}
-	
+
 	/**
-	 * Add or overwrite an header parameter header 
+	 * Добавляет или перезаписывает параметр заголовка
 	 *
 	 * @param string 			$key
 	 * @param string 			$value
@@ -254,30 +254,30 @@ class Response
 	{
 		$this->headers[ucfirst($key)] = $value;
 	}
-	
+
 	/**
-	 * Build a header string based on the current object
+	 * Создает строку заголовка на основе текущего объекта
 	 *
 	 * @return string
 	 */
 	public function buildHeaderString()
 	{
 		$lines = [];
-		
-		// response status 
+
+		// статус ответа
 		$lines[] = "HTTP/1.1 ".$this->status." ".static::$statusCodes[$this->status];
-		
-		// add the headers
+
+		// добавление заголовков
 		foreach( $this->headers as $key => $value )
 		{
 			$lines[] = $key.": ".$value;
 		}
-		
+
 		return implode( " \r\n", $lines )."\r\n\r\n";
 	}
-	
+
 	/**
-	 * Create a string out of the response data
+	 * Преобразует данные ответа в строку
 	 *
 	 * @return string
 	 */
@@ -292,35 +292,35 @@ class Response
 class Request 
 {
 	/**
-	 * The request method
+	 * Метод запроса
 	 *
 	 * @var string 
 	 */
 	public $method = null;
-	
+
 	/**
-	 * The requested uri
+	 * Запрошенный URI
 	 *
 	 * @var string
 	 */
 	public $uri = null;
-	
+
 	/**
-	 * The request params
+	 * Параметры запроса
 	 *
 	 * @var array
 	 */
 	protected $parameters = [];
-	
+
 	/**
-	 * The request params
+	 * Заголовки запроса
 	 *
 	 * @var array
 	 */
 	public $headers = [];
-	
+
 	/**
-	 * Create new request instance using a string header
+	 * Создание нового экземпляра запроса с использованием строки заголовка
 	 *
 	 * @param string 			$header
 	 * @return Request
@@ -328,30 +328,30 @@ class Request
 	public static function withHeaderString( $header )
 	{
 		$lines = explode( "\n", $header );
-		
-		// method and uri
+
+		// метод и URI
 		list( $method, $uri ) = explode( ' ', array_shift( $lines ) );
-		
+
 		$headers = [];
-		
+
 		foreach( $lines as $line )
 		{
-			// clean the line
+			// очистка строки
 			$line = trim( $line );
-			
+
 			if ( strpos( $line, ': ' ) !== false )
 			{
 				list( $key, $value ) = explode( ': ', $line );
 				$headers[$key] = $value;
 			}
 		}	
-		
-		// create new request object
+
+		// создание нового объекта запроса
 		return new static( $method, $uri, $headers );
 	}
-	
+
 	/**
-	 * Request constructor
+	 * Конструктор запроса
 	 *
 	 * @param string 			$method
 	 * @param string 			$uri
@@ -362,16 +362,16 @@ class Request
 	{
 		$this->headers = $headers;
 		$this->method = strtoupper( $method );
-		
-		// split uri and parameters string
+
+		// разделение URI и строки параметров
 		@list( $this->uri, $params ) = explode( '?', $uri );
 
-		// parse the parmeters
+		// разбор параметров
 		parse_str($params ?? '', $this->parameters);
 	}
-	
+
 	/**
-	 * Return the request method
+	 * Возвращает метод запроса
 	 *
 	 * @return string
 	 */
@@ -379,9 +379,9 @@ class Request
 	{
 		return $this->method;
 	}
-	
+
 	/**
-	 * Return the request uri
+	 * Возвращает URI запроса
 	 *
 	 * @return string
 	 */
@@ -389,9 +389,9 @@ class Request
 	{
 		return $this->uri;
 	}
-	
+
 	/**
-	 * Return a request header
+	 * Возвращает заголовок запроса
 	 *
 	 * @return string
 	 */
@@ -401,12 +401,12 @@ class Request
 		{
 			return $default;
 		}
-		
+
 		return $this->headers[$key];
 	}
-	
+
 	/**
-	 * Return a request parameter
+	 * Возвращает параметр запроса
 	 *
 	 * @return string
 	 */
@@ -416,7 +416,7 @@ class Request
 		{
 			return $default;
 		}
-		
+
 		return $this->parameters[$key];
 	}
 }
