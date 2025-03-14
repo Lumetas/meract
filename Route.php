@@ -2,7 +2,8 @@
 class Route {
     private static $routes = [];
     private static $server;
-    private static $notFoundCallback;
+	private static $notFoundCallback;
+	private static $requestHandler;
 
     // Регистрация GET-маршрута
     public static function get($path, $callback) {
@@ -20,8 +21,9 @@ class Route {
     }
 
     // Установка сервера
-    public static function setServer($server) {
+    public static function setServer(Server $server, requestHandler $requestHandler) {
         self::$server = $server;
+		self::$requestHandler = $requestHandler;
     }
 
     // Запуск обработки маршрутов
@@ -32,6 +34,7 @@ class Route {
 
         // Обработчик для сервера
         $handler = function (Request $request) {
+			self::$requestHandler->handle($request);
             $method = $request->method;
             $uri = $request->uri;
 

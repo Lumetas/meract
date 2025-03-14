@@ -330,8 +330,9 @@ class Request
 		$lines = explode( "\n", $header );
 
 		// метод и URI
-		list( $method, $uri ) = explode( ' ', array_shift( $lines ) );
-
+		try {
+			list( $method, $uri ) = explode( ' ', array_shift( $lines ) );
+		} catch(Error $e) {}
 		$headers = [];
 
 		foreach( $lines as $line )
