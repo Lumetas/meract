@@ -1,10 +1,12 @@
 <?php
 Route::get('/', function(Request $rq) {
-	return new Response("is a main page", 200);
+	$h = IterateController::get();
+	return new Response($h, 200);
 });
 
-Route::get('/test', function(Request $rq) {
-	return new Response("is a test page", 200);
+Route::get('/add', function(Request $rq) {
+	IterateController::add();
+	return new Response("value added", 200);
 });
 
 Route::notFound(function(Request $rq) {
