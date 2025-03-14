@@ -1,11 +1,11 @@
 <?php 
 include "Server.php";
-include "requestHandler.php";
+include "RequestLogger.php";
 include "Route.php";
 
 $i = 0;
 
-Route::setServer(new Server('0.0.0.0', 80), new requestHandler);
+Route::setServer(new Server('0.0.0.0', 80), new RequestLogger);
 
 Route::get('/', function(Request $rq) {
 	$GLOBALS["i"] += 1;
