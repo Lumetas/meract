@@ -1,23 +1,21 @@
 <?php 
 include "Server.php";
+include "Route.php";
 
-class HUI {
-	public static function penis (Request $rq) {
-	/* var_dump($request->method); */
-	$r = new Response(json_encode(
-		[ 
-			"a" => "b",
-			"c" => "d",
-			"m" => $rq->method,
-			"this" => "is hui penis method"
-		]
-	), 500);
+Route::setServer(new Server('0.0.0.0', 80));
 
-	$r->header( 'Content-Type', 'application/json; charset=utf-8' );
-	return $r;
-	}
+Route::get('/', function(Request $rq) {
+    return new Response("is a main page", 200);
+});
 
-}
-$server = new Server( '0.0.0.0', 80);
+Route::get('/test', function(Request $rq) {
+    return new Response("is a test page", 200);
+});
 
-$server->listen([HUI::class, 'penis'], function () {echo "server started";});
+Route::notFound(function(Request $rq) {
+    return new Response('is a "TI DOLBOEB PAGE NOT FOUND"', 404);
+});
+
+Route::startHandling(function () {
+    echo "Server started!\n";
+});
