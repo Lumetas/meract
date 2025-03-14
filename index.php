@@ -6,9 +6,16 @@ require __DIR__ . '/vendor/autoload.php';
 // Подключаем файлы из framework/core
 requireFilesRecursively(__DIR__ . '/framework/core');
 requireFilesRecursively(__DIR__ . '/app/core');
-// Инициализация сервера
-Route::setServer(new Server('0.0.0.0', 80), new RequestLogger);
 
+$config = require "config.php";
+
+
+// Инициализация сервера
+if (isset($config["server"]["requestLogger"])){
+	Route::setServer(new Server($config["server"]["host"], $config["server"]["port"]), $config["server"]["requestLogger"]);
+} else {
+	Route::setServer(new Server($config["server"]["host"], $config["server"]["port"]), new RequestLogger);
+}
 // Подключаем пользовательские файлы (контроллеры, модели и т.д.)
 requireFilesRecursively(__DIR__ . '/app/models');
 requireFilesRecursively(__DIR__ . '/app/controllers');
@@ -17,9 +24,13 @@ requireFilesRecursively(__DIR__ . '/app/controllers');
 requireFilesRecursively(__DIR__ . '/app/routes');
 
 // Запуск сервера
-Route::startHandling(function () {
-    echo "Server started!\n";
-});
+if (isset($config["server"]["initFunction"])){
+	Route::startHandling($config["server"]["initFunction"]);
+} else {
+	Route::startHandling(function () {
+		echo "Server started!\n";
+	});
+}
 
 /**
  * Рекурсивно подключает все PHP-файлы из указанной директории.
