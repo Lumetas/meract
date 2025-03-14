@@ -310,7 +310,7 @@ class Request
 	 *
 	 * @var array
 	 */
-	protected $parameters = [];
+	public $parameters = [];
 
 	/**
 	 * Заголовки запроса
@@ -330,9 +330,7 @@ class Request
 		$lines = explode( "\n", $header );
 
 		// метод и URI
-		try {
-			list( $method, $uri ) = explode( ' ', array_shift( $lines ) );
-		} catch(Error $e) {}
+		@list( $method, $uri ) = explode( ' ', array_shift( $lines ) );
 		$headers = [];
 
 		foreach( $lines as $line )
