@@ -1,126 +1,216 @@
 <?php
 class Server 
 {
-	/**
-	 * Текущий хост
-	 *
-	 * @var string
-	 */
-	protected $host = null;
+    /**
+     * Текущий хост
+     *
+     * @var string
+     */
+    protected $host;
 
-	/**
-	 * Текущий порт
-	 *
-	 * @var int
-	 */
-	protected $port = null;
+    /**
+     * Текущий порт
+     *
+     * @var int
+     */
+    protected $port;
 
-	/**
-	 * Привязанный сокет
-	 * 
-	 * @var resource
-	 */
-	protected $socket = null;
+    /**
+     * Привязанный сокет
+     * 
+     * @var resource|null
+     */
+    protected $socket = null;
 
-	/**
-	 * Конструктор нового экземпляра Server
-	 * 
-	 * @param string       $host
-	 * @param int         $port
-	 * @return void
-	 */
-	public function __construct( $host, $port)
-	{
-		$this->host = $host;
-		$this->port = (int) $port;
+    /**
+     * Путь к SSL-сертификату
+     *
+     * @var string|null
+     */
+    protected $sslCertPath = null;
 
-		// создаем сокет
-		$this->createSocket();
+    /**
+     * Путь к приватному ключу
+     *
+     * @var string|null
+     */
+    protected $sslKeyPath = null;
 
-		// привязываем сокет
-		$this->bind();
-	}
+    /**
+     * Разрешить самоподписанные сертификаты
+     *
+     * @var bool
+     */
+    protected $sslAllowSelfSigned = false;
 
-	/**
-	 * Создание нового ресурса сокета
-	 *
-	 * @return void
-	 */
-	protected function createSocket()
-	{
-		$this->socket = socket_create( AF_INET, SOCK_STREAM, 0 );
-	}
+    /**
+     * Проверять сертификат клиента
+     *
+     * @var bool
+     */
+    protected $sslVerifyPeer = false;
 
-	/**
-	 * Привязка ресурса сокета
-	 *
-	 * @throws ClanCats\Station\PHPServer\Exception
-	 * @return void
-	 */
-	protected function bind()
-	{
-		if ( !socket_bind( $this->socket, $this->host, $this->port ) )
-		{
-			throw new Exception( 'Could not bind: '.$this->host.':'.$this->port.' - '.socket_strerror( socket_last_error() ) );
-		}
-	}
+    /**
+     * Конструктор нового экземпляра Server
+     * 
+     * @param string $host
+     * @param int $port
+     * @param string|null $sslCertPath Путь к SSL-сертификату (необязательно)
+     * @param string|null $sslKeyPath Путь к приватному ключу (необязательно)
+     * @param bool $sslAllowSelfSigned Разрешить самоподписанные сертификаты (по умолчанию false)
+     * @param bool $sslVerifyPeer Проверять сертификат клиента (по умолчанию false)
+     * @return void
+     */
+    public function __construct($host, $port, $sslCertPath = null, $sslKeyPath = null, $sslAllowSelfSigned = false, $sslVerifyPeer = false)
+    {
+        $this->host = $host;
+        $this->port = (int) $port;
+        $this->sslCertPath = $sslCertPath;
+        $this->sslKeyPath = $sslKeyPath;
+        $this->sslAllowSelfSigned = $sslAllowSelfSigned;
+        $this->sslVerifyPeer = $sslVerifyPeer;
 
-	/**
-	 * Ожидание запросов
-	 *
-	 * @param callable         $callback
-	 * @return void 
-	 */
-	public function listen( $callback, $init_callback )
-	{
-		if (is_callable($init_callback)) {
-			$init_callback();
-		}
-		// проверяем, является ли callback допустимым
-		if ( !is_callable( $callback ) )
-		{
-			throw new Exception( 'Переданный аргумент должен быть вызываемым.' );
-		}
+        // Создаем сокет
+        $this->createSocket();
 
-		while ( 1 ) 
-		{
-			// ожидаем соединений
-			socket_listen( $this->socket );
+        // Привязываем сокет
+        $this->bind();
+    }
 
-			// пытаемся получить ресурс сокета клиента
-			// если false, произошла ошибка, закрываем соединение и продолжаем
-			if ( !$client = socket_accept( $this->socket ) ) 
-			{
-				socket_close( $client ); continue;
-			}
+    /**
+     * Создание нового ресурса сокета
+     *
+     * @return void
+     */
+    protected function createSocket()
+    {
+        if ($this->sslCertPath && $this->sslKeyPath) {
+            // Если указаны пути к сертификату и ключу, создаем SSL-контекст
+            $context = stream_context_create([
+                'ssl' => [
+                    'local_cert' => $this->sslCertPath,         // Путь к сертификату
+                    'local_pk' => $this->sslKeyPath,           // Путь к приватному ключу
+                    'allow_self_signed' => $this->sslAllowSelfSigned, // Разрешить самоподписанные сертификаты
+                    'verify_peer' => $this->sslVerifyPeer,      // Проверять сертификат клиента
+                ]
+            ]);
 
-			// создаем новый экземпляр запроса с заголовком клиента.
-			// В реальном мире, конечно, нельзя просто фиксировать максимальный размер в 1024..
-			$request = Request::withHeaderString( socket_read( $client, 1024 ) );
+            $this->socket = stream_socket_server(
+                "tcp://{$this->host}:{$this->port}", 
+                $errno, 
+                $errstr, 
+                STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, 
+                $context
+            );
 
-			// выполняем callback
-			$response = call_user_func( $callback, $request );
+            if (!$this->socket) {
+                throw new Exception("Не удалось создать сокет: $errstr ($errno)");
+            }
 
-			// проверяем, действительно ли мы получили объект Response
-			// если нет, возвращаем объект Response с ошибкой 404
-			if ( !$response || !$response instanceof Response )
-			{
-				$response = Response::error( 404 );
-			}
+            // Включаем шифрование на сокете
+            stream_socket_enable_crypto($this->socket, true, STREAM_CRYPTO_METHOD_SSLv23_SERVER);
+        } else {
+            // Если SSL не используется, создаем обычный сокет
+            $this->socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 
-			// преобразуем наш ответ в строку
-			$response = (string) $response;
+            if (!$this->socket) {
+                throw new Exception("Не удалось создать сокет: " . socket_strerror(socket_last_error()));
+            }
+        }
+    }
 
-			// записываем ответ в сокет клиента
-			socket_write( $client, $response, strlen( $response ) );
+    /**
+     * Привязка ресурса сокета
+     *
+     * @throws Exception
+     * @return void
+     */
+    protected function bind()
+    {
+        if ($this->sslCertPath && $this->sslKeyPath) {
+            // Для SSL сокет уже привязан через stream_socket_server
+            return;
+        }
 
-			// закрываем соединение, чтобы можно было принимать новые
-			socket_close( $client );
-		}
-	}
+        if (!socket_bind($this->socket, $this->host, $this->port)) {
+            throw new Exception('Could not bind: ' . $this->host . ':' . $this->port . ' - ' . socket_strerror(socket_last_error()));
+        }
+
+        // Переводим сокет в режим прослушивания
+        if (!socket_listen($this->socket)) {
+            throw new Exception('Could not listen on socket: ' . socket_strerror(socket_last_error()));
+        }
+    }
+
+    /**
+     * Ожидание запросов
+     *
+     * @param callable $callback
+     * @param callable $init_callback
+     * @return void 
+     */
+    public function listen($callback, $init_callback)
+    {
+        if (is_callable($init_callback)) {
+            $init_callback();
+        }
+
+        if (!is_callable($callback)) {
+            throw new Exception('Переданный аргумент должен быть вызываемым.');
+        }
+
+        while (true) {
+            if ($this->sslCertPath && $this->sslKeyPath) {
+                // Для SSL используем stream_socket_accept
+                $client = stream_socket_accept($this->socket);
+
+                if (!$client) {
+                    continue;
+                }
+
+                // Включаем шифрование на клиентском сокете
+                stream_socket_enable_crypto($client, true, STREAM_CRYPTO_METHOD_SSLv23_SERVER);
+
+                $request = Request::withHeaderString(fread($client, 1024));
+            } else {
+                // Для обычного сокета используем socket_accept
+                if (!$client = socket_accept($this->socket)) {
+                    echo "Ошибка при принятии соединения: " . socket_strerror(socket_last_error()) . "\n";
+                    continue;
+                }
+
+                // Читаем данные из сокета
+                $requestData = socket_read($client, 1024);
+                if ($requestData === false) {
+                    echo "Ошибка при чтении данных: " . socket_strerror(socket_last_error()) . "\n";
+                    socket_close($client);
+                    continue;
+                }
+
+                $request = Request::withHeaderString($requestData);
+            }
+
+            // Вызываем callback для обработки запроса
+            $response = call_user_func($callback, $request);
+
+            // Если ответ неверный, возвращаем ошибку 404
+            if (!$response || !$response instanceof Response) {
+                $response = Response::error(404);
+            }
+
+            // Отправляем ответ клиенту
+            if ($this->sslCertPath && $this->sslKeyPath) {
+                // Для SSL используем fwrite
+                fwrite($client, (string) $response);
+                fclose($client);
+            } else {
+                // Для обычного сокета используем socket_write
+                socket_write($client, (string) $response, strlen((string) $response));
+                socket_close($client);
+            }
+        }
+    }
 }
-
-
 class Response 
 {
 	/**

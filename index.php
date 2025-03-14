@@ -10,12 +10,50 @@ requireFilesRecursively(__DIR__ . '/app/core');
 $config = require "config.php";
 
 
+
 // Инициализация сервера
-if (isset($config["server"]["requestLogger"])){
-	Route::setServer(new Server($config["server"]["host"], $config["server"]["port"]), $config["server"]["requestLogger"]);
+if (isset($config["SSL"], 
+	$config["SSL"]["sslCertPath"],
+	$config["SSL"]["sslKeyPath"],
+	$config["SSL"]["sslAllowSelfSigned"],
+	$config["SSL"]["sslVerifyPeer"])) {
+
+
+	if (isset($config["server"]["requestLogger"])){
+		Route::setServer(new Server(
+			$config["server"]["host"],
+			$config["server"]["port"],
+			$config["SSL"]["sslCertPath"],
+			$config["SSL"]["sslKeyPath"],
+			$config["SSL"]["sslAllowSelfSigned"],
+			$config["SSL"]["sslVerifyPeer"]
+		),
+
+		$config["server"]["requestLogger"]);
+
+
+
+	} else {
+		Route::setServer(new Server(
+			$config["server"]["host"],
+			$config["server"]["port"],
+			$config["SSL"]["sslCertPath"],
+			$config["SSL"]["sslKeyPath"],
+			$config["SSL"]["sslAllowSelfSigned"],
+			$config["SSL"]["sslVerifyPeer"]
+		), 
+
+		new RequestLogger);
+	}
+
 } else {
-	Route::setServer(new Server($config["server"]["host"], $config["server"]["port"]), new RequestLogger);
+	if (isset($config["server"]["requestLogger"])){
+		Route::setServer(new Server($config["server"]["host"], $config["server"]["port"]), $config["server"]["requestLogger"]);
+	} else {
+		Route::setServer(new Server($config["server"]["host"], $config["server"]["port"]), new RequestLogger);
+	}
 }
+
 // Подключаем пользовательские файлы (контроллеры, модели и т.д.)
 requireFilesRecursively(__DIR__ . '/app/models');
 requireFilesRecursively(__DIR__ . '/app/controllers');
@@ -38,10 +76,10 @@ if (isset($config["server"]["initFunction"])){
  * @param string $directory Путь к директории.
  */
 function requireFilesRecursively($directory) {
-    $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory));
-    foreach ($iterator as $file) {
-        if ($file->isFile() && $file->getExtension() === 'php') {
-            require $file->getPathname();
-        }
-    }
+	$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory));
+	foreach ($iterator as $file) {
+		if ($file->isFile() && $file->getExtension() === 'php') {
+			require $file->getPathname();
+		}
+	}
 }
