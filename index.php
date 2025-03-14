@@ -5,7 +5,7 @@ require __DIR__ . '/vendor/autoload.php';
 
 // Подключаем файлы из framework/core
 requireFilesRecursively(__DIR__ . '/framework/core');
-
+requireFilesRecursively(__DIR__ . '/app/core');
 // Инициализация сервера
 Route::setServer(new Server('0.0.0.0', 80), new RequestLogger);
 

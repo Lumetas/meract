@@ -4,6 +4,7 @@ function run() {
 	$requiredDirectories = [
 		PROJECT_DIR.'/framework/commands',
 		PROJECT_DIR.'/framework/core',
+		PROJECT_DIR.'/app/core',
 		PROJECT_DIR.'/app/controllers',
 		PROJECT_DIR.'/app/models',
 		PROJECT_DIR.'/app/routes',
