@@ -1,10 +1,26 @@
 <?php
-Route::get('/', function(Request $rq) {
-	$content = View::render("main", [
-		"title" => "example lumframework project",
-		"value" => IterateController::get()
-	]);
-	$r = new Response($content, 200);
+Route::get('/1', function(Request $rq) {
+	$r = new Response($rq->cookie("username"), 200);
+	Storage::set("prop", "val=1");
+	$r->header("Content-Type", "text/html");
+	return $r;
+});
+
+Route::get('/2', function(Request $rq) {
+	$r = new Response(Storage::get("prop"), 200);
+	$r->header("Content-Type", "text/html");
+	return $r;
+});
+
+Route::get('/3', function(Request $rq) {
+	$r = new Response($rq->cookie("username"), 200);
+	Storage::set("prop", "val=2", "test");
+	$r->header("Content-Type", "text/html");
+	return $r;
+});
+
+Route::get('/4', function(Request $rq) {
+	$r = new Response(Storage::get("prop", "test"), 200);
 	$r->header("Content-Type", "text/html");
 	return $r;
 });

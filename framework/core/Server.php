@@ -277,6 +277,45 @@ class Response
 	}
 
 	/**
+	 * Устанавливает cookie
+	 *
+	 * @param string $name Имя cookie
+	 * @param string $value Значение cookie
+	 * @param int $expire Время истечения срока действия cookie (timestamp)
+	 * @param string $path Путь на сервере, на котором будет доступна cookie
+	 * @param string $domain Домен, на котором будет доступна cookie
+	 * @param bool $secure Указывает, что cookie должна передаваться только по HTTPS
+	 * @param bool $httpOnly Указывает, что cookie доступна только через HTTP (не через JavaScript)
+	 * @return void
+	 */
+	public function setCookie($name, $value, $expire = 0, $path = '', $domain = '', $secure = false, $httpOnly = false)
+	{
+		$cookie = urlencode($name) . '=' . urlencode($value);
+
+		if ($expire > 0) {
+			$cookie .= '; expires=' . gmdate('D, d-M-Y H:i:s T', $expire);
+		}
+
+		if (!empty($path)) {
+			$cookie .= '; path=' . $path;
+		}
+
+		if (!empty($domain)) {
+			$cookie .= '; domain=' . $domain;
+		}
+
+		if ($secure) {
+			$cookie .= '; secure';
+		}
+
+		if ($httpOnly) {
+			$cookie .= '; HttpOnly';
+		}
+
+		$this->header('Set-Cookie', $cookie);
+	}
+
+	/**
 	 * Преобразует данные ответа в строку
 	 *
 	 * @return string
@@ -286,7 +325,6 @@ class Response
 		return $this->buildHeaderString().$this->body();
 	}
 }
-
 
 
 class Request 
@@ -318,6 +356,13 @@ class Request
 	 * @var array
 	 */
 	public $headers = [];
+
+	/**
+	 * Cookies запроса
+	 *
+	 * @var array
+	 */
+	public $cookies = [];
 
 	/**
 	 * Создание нового экземпляра запроса с использованием строки заголовка
@@ -367,6 +412,25 @@ class Request
 
 		// разбор параметров
 		parse_str($params ?? '', $this->parameters);
+
+		// разбор cookies
+		$this->parseCookies();
+	}
+
+	/**
+	 * Разбор cookies из заголовков
+	 *
+	 * @return void
+	 */
+	protected function parseCookies()
+	{
+		if (isset($this->headers['Cookie'])) {
+			$cookies = explode(';', $this->headers['Cookie']);
+			foreach ($cookies as $cookie) {
+				list($key, $value) = explode('=', trim($cookie));
+				$this->cookies[$key] = $value;
+			}
+		}
 	}
 
 	/**
@@ -417,5 +481,20 @@ class Request
 		}
 
 		return $this->parameters[$key];
+	}
+
+	/**
+	 * Возвращает cookie запроса
+	 *
+	 * @return string
+	 */
+	public function cookie( $key, $default = null )
+	{
+		if ( !isset( $this->cookies[$key] ) )
+		{
+			return $default;
+		}
+
+		return $this->cookies[$key];
 	}
 }
