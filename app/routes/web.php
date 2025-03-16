@@ -1,26 +1,14 @@
 <?php
-Route::get('/1', function(Request $rq) {
-	$r = new Response($rq->cookie("username"), 200);
-	Storage::set("prop", "val=1");
-	$r->header("Content-Type", "text/html");
-	return $r;
-});
-
-Route::get('/2', function(Request $rq) {
-	$r = new Response(Storage::get("prop"), 200);
-	$r->header("Content-Type", "text/html");
-	return $r;
-});
-
-Route::get('/3', function(Request $rq) {
-	$r = new Response($rq->cookie("username"), 200);
-	Storage::set("prop", "val=2", "test");
-	$r->header("Content-Type", "text/html");
-	return $r;
-});
-
-Route::get('/4', function(Request $rq) {
-	$r = new Response(Storage::get("prop", "test"), 200);
+use LUM\core\Route;
+use LUM\core\Request;
+use LUM\core\Response;
+Route::get('/', function(Request $rq) {
+	global $pdo;
+	if (isset($pdo)){
+		/* echo 1; */
+	}
+	/* file_put_contents(time(), time()); */
+	$r = new Response($rq->cookie("username", "У вас нет имени"), 200);
 	$r->header("Content-Type", "text/html");
 	return $r;
 });

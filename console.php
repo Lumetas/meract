@@ -17,7 +17,7 @@ if ($argc < 2) {
 $commandName = $argv[1];
 
 // Путь к файлу команды
-$commandFile = __DIR__ . "/framework/commands/{$commandName}.php";
+$commandFile = __DIR__ . "/lum/commands/{$commandName}.php";
 
 // Проверяем, существует ли файл команды
 if (!file_exists($commandFile)) {
