@@ -14,6 +14,11 @@ return [
 	"server" => [
 		"host" => "0.0.0.0",
 		"port" => 80
+	],
+	
+	"database" => [
+		"driver" => "sqlite",
+		"sqlite_path" => __DIR__ . "/db.sqlite"
 	]
 ];
 ```
@@ -139,7 +144,87 @@ return prepare_html(View::render("main", [
 </html>
 ```
 ## Модели
-Особого синтаксиса у моделей нет. Поскольку данный фреймворк это не швейцарский нож с ORM и всем всем всем. Его цель это быстрый, маленький, аккуратный backend, например для сайта на 2-3 страницы.
+Для работы прийдётся настроить базу данных. в вашем файле config.php
+Примеры:
+```
+"database" => [
+    "driver" => "mysql",
+    "host" => "localhost",
+    "port" => 3306,
+    "dbname" => "test",
+    "username" => "root",
+    "password" => "",
+    "charset" => "utf8mb4"
+]
+```
+```
+"database" => [
+    "driver" => "pgsql",
+    "host" => "localhost",
+    "port" => 5432,
+    "dbname" => "test",
+    "username" => "postgres",
+    "password" => "password"
+]
+```
+```
+"database" => [
+    "driver" => "sqlite",
+    "sqlite_path" => __DIR__ . "/database.sqlite"
+]
+```
+У вас должны быть установлены и включены модули pdo и другие.
+```
+use LUM\core\Model;
+class TestModel extends Model{
+	protected static $table = 'your_table'; // Имя таблицы
+	protected $fillable = ['id', 'name'];
+
+}
+```
+Вот так вы можете создать модель привязанную к таблице. Далее примеры использования данной модели. В рамках данного примера выполнение происходит внутри роута. Вы же должны делать это внутри контроллера.
+```
+Route::get('/', function (Request $rq) {
+	$m = new TestModel(["name" => (string) random_int(0, 10000)]); // Создаём модель с случайным именем.
+	$m->save(); //Сохраняем.
+	$r = new Response("Запись создана", 200); //Создаём ответ. С текстом и статусом 200.
+	$r->header("Content-Type", "text/html");// Устанавливаем тип html
+	return $r;// возвращаем ответ.
+});
+
+Route::get('/show', function (Request $rq) {
+	$m = new TestModel();//Создаём модель 
+	$pices = OUTVAR::dump($m->all()); //$m->all() - Возвращает все записи. OUTVAR::dump делает var_dump в переменную
+
+	$r = new Response("<pre>$pices</pre>", 200);// Выводим всё пользователю обрамляе в pre
+	$r->header("Content-Type", "text/html");
+	return $r;
+});
+
+Route::get('/up/{id}/{data}', function (Request $rq, array $data) {
+	$test = TestModel::find((int) $data["id"]); //Создаём модель из записи с id полученным из запроса.
+	$test->name = $data['data']; // Устанавливаем значение data из запроса в name.
+	$test->save(); // сохраняем
+
+	$pices = "Запись $data[id] обновлена";
+	//Сообщаем пользователю.
+	$r = new Response("<pre>$pices</pre>", 200);
+	$r->header("Content-Type", "text/html");
+	return $r;
+});
+
+Route::get('/del/{id}', function (Request $rq, array $data) {
+	$test = TestModel::find((int) $data["id"]);// создаём модель из записи по id 
+	$test->delete();// Удаляем запись.
+	
+	$pices = "Запись $data[id] Удалена";//Информируем пользователя.
+
+	$r = new Response("<pre>$pices</pre>", 200);
+	$r->header("Content-Type", "text/html");
+	return $r;
+});
+```
+Данные примеры кода охватывают стандартные CRUD операции выполненные через модели.
 
 
 ## Storage
