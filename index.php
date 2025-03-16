@@ -10,7 +10,11 @@ requireFilesRecursively(__DIR__ . '/app/core');
 use LUM\core\Database;
 use LUM\core\Route;
 use LUM\core\Server;
+use LUM\core\Request;
+use LUM\core\Response;
 use LUM\core\RequestLogger;
+use LUM\core\WorkerInstance;
+
 $config = require "config.php";
 try {
 	$database = Database::getInstance($config['database']);
@@ -28,9 +32,20 @@ try {
 	}
 
 } catch (Exception $e) {
-	if (isset($config['worker'], $config['worker']['table'], $config['worker']['fileColumn'], $config['worker']['dataColumn'])){
-		echo "Сервер уже запущен. Воркер настроен. Запуск.\n";
+	if (isset($config['worker'], $config['worker']['enabled'], $config['worker']['endpoint'], $config['worker']['server-callback']) && $config['worker']['enabled']) {
+		echo "Сервер уже запущен. Воркер настроен. Запуск.\n";	
+		// Устанавливаем имя таблицы
+		
 		while (true) {
+			$work = WorkerInstance::first();
+
+			if ($work) {
+				$file = $work->name;
+				$message = $work->message;
+				(require "app/workers/$file.php")->run($message);
+				$work->delete();
+			}
+			sleep(1);
 		}
 	} else {
 		echo "Сервер уже запущен. Воркер не настроен. Завершение.\n";
@@ -43,6 +58,13 @@ requireFilesRecursively(__DIR__ . '/app/controllers');
 
 // Подключаем роуты
 requireFilesRecursively(__DIR__ . '/app/routes');
+
+if (isset($config['worker'], $config['worker']['enabled'], $config['worker']['endpoint'], $config['worker']['server-callback']) && $config['worker']['enabled']) {
+	Route::get("/worker-".$config['worker']['endpoint'], function (Request $rq) {
+		global $config;
+		return new Response($config['worker']['server-callback'] ($rq->parameters["data"]), 200);
+	});
+}
 
 
 // Запуск сервера

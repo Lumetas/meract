@@ -9,6 +9,7 @@ function run() {
 		PROJECT_DIR.'/app/models',
 		PROJECT_DIR.'/app/routes',
 		PROJECT_DIR.'/app/views',
+		PROJECT_DIR.'/app/workers',
 		PROJECT_DIR.'/static',
 	];
 

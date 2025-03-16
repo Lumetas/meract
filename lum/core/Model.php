@@ -33,6 +33,42 @@ abstract class Model
         }
     }
 
+    public static function first()
+    {
+
+        $pdo = self::getPdo();
+        $table = self::getTable();
+
+        // Получаем id первой записи
+        $stmt = $pdo->prepare("SELECT id FROM {$table} ORDER BY id ASC LIMIT 1");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($result && isset($result['id'])) {
+            // Используем метод find() для создания объекта модели
+            return static::find($result['id']);
+        }
+        return null;
+    }
+
+    public static function last()
+    {
+        $pdo = self::getPdo();
+        $table = self::getTable();
+
+        // Получаем id последней записи
+        $stmt = $pdo->prepare("SELECT id FROM {$table} ORDER BY id DESC LIMIT 1");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($result && isset($result['id'])) {
+            // Используем метод find() для создания объекта модели
+            return static::find($result['id']);
+        }
+        return null;
+    }
+
+
     // Получение подключения к базе данных
     protected static function getPdo()
     {

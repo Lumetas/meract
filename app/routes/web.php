@@ -3,6 +3,7 @@ use LUM\core\Route;
 use LUM\core\Request;
 use LUM\core\Response;
 use LUM\core\OUTVAR;
+use LUM\core\Worker;
 Route::get('/', function (Request $rq) {
 	/* file_put_contents(time(), time()); */
 	$m = new TestModel(["name" => (string) random_int(0, 10000)]);
@@ -22,6 +23,17 @@ Route::get('/show', function (Request $rq) {
 	$r->header("Content-Type", "text/html");
 	return $r;
 });
+
+Route::get('/work/{time}', function (Request $rq, array $data) {
+	/* file_put_contents(time(), time()); */
+	Worker::register("sleep", $data['time']);
+
+
+	$r = new Response("<pre>Worker registered</pre>", 200);
+	$r->header("Content-Type", "text/html");
+	return $r;
+});
+
 
 Route::get('/up/{id}/{data}', function (Request $rq, array $data) {
 	/* file_put_contents(time(), time()); */

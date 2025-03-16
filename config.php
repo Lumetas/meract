@@ -9,8 +9,11 @@ return [
 		"sqlite_path" => __DIR__ . "/db.sqlite"
 	],
 	"worker" => [
-		"table" => "worker",
-		"fileColumn" => "file",
-		"dataColumn" => "data"
+		"enabled" => true,
+		"endpoint" => "endpoint",
+		"server-callback" => function ($data): string {
+			echo $data."\n";
+			return "Понял";
+		}
 	]
 ];
