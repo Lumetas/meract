@@ -89,6 +89,7 @@ Route::notFound(function(Request $rq) {
 ```
 И контроллер используемый тут:
 ```
+use LUM\core\Controller;
 class IterateController extends Controller{
 	private static $i = 0;
 	public static function add($rq, $arr) {
@@ -122,7 +123,7 @@ $content = View::render("main", [
 Данный метод рендерит указанный шаблон в html с переданными ему параметрами и возвращает этот самый html который вы может уже использовать на своё усмотрение. Пример есть в контроллерах выше.
 Находясь в контроллере можно обернуть в prepare_html и сразу же вернуть.
 ```
-return prepare_html(View::render("main", [
+return self::prepare_html(View::render("main", [
     "property1" => "value1",
     "property2" => "value2"
 ]));
