@@ -4,7 +4,9 @@ use LUM\core\Request;
 use LUM\core\Response;
 use LUM\core\OUTVAR;
 use LUM\core\Worker;
+use LUM\core\QRYLI;
 Route::get('/', function (Request $rq) {
+	QRYLI::insert("your_table", ["name" => "aaaaa"])->run();
 	/* file_put_contents(time(), time()); */
 	$m = new TestModel(["name" => (string) random_int(0, 10000)]);
 	$m->save();

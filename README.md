@@ -285,3 +285,23 @@ Worker::register("sleep", "3");
 Метод sendToServer отправит данные на endpoint. И в мастер процессе отработает колбэк функция воркера. Возвращаемое ей значение выйдет из метода sendToServer.
 
 По факту это система очередей. Но благодоря сохранению состояния. Вы можете создать воркер для обработки большого количества информации. Результат отправить в мастер и сохранить в storage для быстрого ответа пользователю.
+
+Для запуска воркера нужно повторно запустить `index.php` после запуска сервера.
+
+## QRYLI
+qryli это QueryBuilder. Для начала вам необходимо установить в класс объект pdo. Он хранится в глобальной переменной. Например вы можете установить его, а так же storage в initFunction в вашем `config.php`:
+```
+"initFunction" => function () {
+	global $pdo;
+	Storage::setTime(600);
+	QRYLI::setPdo($pdo);
+	echo "server started!\n";
+}
+```
+Небольшие примеры использования:
+```
+QRYLI::insert("users", ["name" => "aaaaa"])->run();
+$users = QRYLI::select('*')->from('users')->where('age > ?', [18])->orderBy('name')->limit(10)->run();
+QRYLI::update('users', ['age' => 26])->where('id = ?', [1])->run();
+QRYLI::delete('users')->where('id = ?', [1])->run();
+```
