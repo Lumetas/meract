@@ -2,6 +2,7 @@
 
 // Подключаем автозагрузку Composer
 require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/lum/core/RecursiveLoad.php';
 
 // Подключаем файлы core
 requireFilesRecursively(__DIR__ . '/lum/core');
@@ -13,7 +14,6 @@ use LUM\core\Server;
 use LUM\core\Request;
 use LUM\core\Response;
 use LUM\core\RequestLogger;
-use LUM\core\WorkerInstance;
 
 $config = require "config.php";
 try {
@@ -32,25 +32,9 @@ try {
 	}
 
 } catch (Exception $e) {
-	if (isset($config['worker'], $config['worker']['enabled'], $config['worker']['endpoint'], $config['worker']['server-callback']) && $config['worker']['enabled']) {
-		echo "Сервер уже запущен. Воркер настроен. Запуск.\n";	
-		// Устанавливаем имя таблицы
-		
-		while (true) {
-			$work = WorkerInstance::first();
-
-			if ($work) {
-				$file = $work->name;
-				$message = $work->message;
-				(require "app/workers/$file.php")->run($message);
-				$work->delete();
-			}
-			sleep(1);
-		}
-	} else {
-		echo "Сервер уже запущен. Воркер не настроен. Завершение.\n";
-		exit();
-	}
+	echo "Ошибка запуска сервера, возможно проблемы с конфигурацией или сервер уже запущен\n";
+	echo $e->getMessage()."\n";
+	exit();
 }
 // Подключаем пользовательские файлы (контроллеры, модели и т.д.)
 requireFilesRecursively(__DIR__ . '/app/models');
@@ -74,17 +58,4 @@ if (isset($config["server"]["initFunction"])){
 	Route::startHandling(function () {
 		echo "Server started!\n";
 	});
-}
-/**
- * Рекурсивно подключает все PHP-файлы из указанной директории.
- *
- * @param string $directory Путь к директории.
- */
-function requireFilesRecursively($directory) {
-	$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory));
-	foreach ($iterator as $file) {
-		if ($file->isFile() && $file->getExtension() === 'php') {
-			require $file->getPathname();
-		}
-	}
 }
