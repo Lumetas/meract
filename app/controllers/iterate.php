@@ -1,6 +1,6 @@
 <?php
-use LUM\core\Controller;
-use LUM\core\Storage;
+use Lum\Core\Controller;
+use Lum\Core\Storage;
 class IterateController extends Controller{
 	private static $i = 0;
 	public static function add($rq, $arr) {

@@ -1,5 +1,5 @@
 <?php
-namespace LUM\core;
+namespace Lum\Core;
 use PDO;
 use PDOException;
 

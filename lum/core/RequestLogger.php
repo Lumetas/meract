@@ -1,5 +1,5 @@
 <?php
-namespace LUM\core;
+namespace Lum\Core;
 class RequestLogger {
 	public function handle(Request $rq){
 		$uri = $rq->uri;

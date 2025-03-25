@@ -7,7 +7,7 @@
 
 
 ### Напоминаю
-Все классы фреймворка нужно подключить используя `use LUM\core\<Class>`
+Все классы фреймворка нужно подключить используя `use Lum\Core\<Class>`
 
 
 ## Конфигурация
@@ -50,7 +50,7 @@ return [
 git clone https://github.com/Lumetas/lum_framework.git;
 cd lum_framework;
 composer install;
-php console.php init;
+php lst init;
 ```
 
 ## Запуск
@@ -93,7 +93,7 @@ Route::notFound(function(Request $rq) {
 ```
 И контроллер используемый тут:
 ```
-use LUM\core\Controller;
+use Lum\Core\Controller;
 class IterateController extends Controller{
 	private static $i = 0;
 	public static function add($rq, $arr) {
@@ -180,7 +180,7 @@ return self::prepare_html(View::render("main", [
 ```
 У вас должны быть установлены и включены модули pdo и другие.
 ```
-use LUM\core\Model;
+use Lum\Core\Model;
 class TestModel extends Model{
 	protected static $table = 'your_table'; // Имя таблицы
 	protected $fillable = ['id', 'name'];
@@ -268,7 +268,7 @@ Storage::handleDeletion(); // Удаляет все истёкшие запис�
 В файле `app/workers/sleep.php`:
 ```
 <?php
-use LUM\core\Worker;
+use Lum\Core\Worker;
 
 return new class extends Worker {
     public function run(string $message) {
@@ -308,4 +308,71 @@ QRYLI::insert("users", ["name" => "aaaaa"])->run();
 $users = QRYLI::select('*')->from('users')->where('age > ?', [18])->orderBy('name')->limit(10)->run();
 QRYLI::update('users', ['age' => 26])->where('id = ?', [1])->run();
 QRYLI::delete('users')->where('id = ?', [1])->run();
+```
+
+## Миграции
+Фреймворк обладает базовым функционалом миграций.
+
+Для создания миграции вам нужно создать файл, например `app/migrations/first_migration.php`:
+```
+<?php
+
+use Lum\Core\Migration;
+
+return new class extends Migration {
+    public function up()
+    {
+        $this->schema->create('fist_migration', function ($table) {
+            $table->id();               // Автоинкрементный первичный ключ
+            $table->string('name');     // Строковое поле name
+            $table->string('message');  // Строковое поле message
+        });
+    }
+
+    public function down()
+	{
+        $this->schema->drop('first_migration');
+    }
+};
+```
+Дальше вы можете воспользоваться `lst` для применения миграции:
+```
+php lst migrate # Все миграции
+php lst migrate fist_migration # Миграция "first_migration"
+```
+Так же чтобы откатить миграции вы можете сделать:
+```
+php lst migrate.rollback # Все миграции
+php lst migrate.rollback fist_migration # Миграция "first_migration"
+```
+
+
+## lst
+`lst` или `lum support tool` средство помощи.
+Для создания команды вам нужно создать файл в 'lum/commands/file.php'
+С примерно таким синтаксисом:
+```
+<?php
+return new class {
+	public function run($argv, $argc) {
+		var_dump($argv);
+	}
+};
+```
+После вы сможете вызвать команду так:
+```
+php lst file arg0 arg1 arg2 arg3
+```
+Вы увидите примерно следующее:
+```
+array(4) {
+  [0]=>
+  string(4) "arg0"
+  [1]=>
+  string(4) "arg1"
+  [2]=>
+  string(4) "arg2"
+  [3]=>
+  string(4) "arg3"
+}
 ```

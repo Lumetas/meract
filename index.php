@@ -8,12 +8,12 @@ require __DIR__ . '/lum/core/RecursiveLoad.php';
 requireFilesRecursively(__DIR__ . '/lum/core');
 requireFilesRecursively(__DIR__ . '/app/core');
 
-use LUM\core\Database;
-use LUM\core\Route;
-use LUM\core\Server;
-use LUM\core\Request;
-use LUM\core\Response;
-use LUM\core\RequestLogger;
+use Lum\Core\Database;
+use Lum\Core\Route;
+use Lum\Core\Server;
+use Lum\Core\Request;
+use Lum\Core\Response;
+use Lum\Core\RequestLogger;
 
 $config = require "config.php";
 try {

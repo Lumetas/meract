@@ -1,5 +1,5 @@
 <?php
-namespace LUM\core;
+namespace Lum\Core;
 class View {
     private static $viewPath = 'app/views'; // Путь к директории с шаблонами
 

@@ -6,8 +6,8 @@ require_once __DIR__ . '/lum/core/RecursiveLoad.php';
 // Подключаем файлы core
 requireFilesRecursively(__DIR__ . '/lum/core');
 
-use LUM\core\WorkerInstance;
-use LUM\core\Database;
+use Lum\Core\WorkerInstance;
+use Lum\Core\Database;
 
 $config = require "config.php";
 try {

@@ -1,6 +1,6 @@
 <?php
 return new class {
-	public function run() {
+	public function run($argv, $argc) {
 		// Папки, которые должны быть созданы
 		$requiredDirectories = [
 			PROJECT_DIR.'/lum/commands',
@@ -11,6 +11,7 @@ return new class {
 			PROJECT_DIR.'/app/routes',
 			PROJECT_DIR.'/app/views',
 			PROJECT_DIR.'/app/workers',
+			PROJECT_DIR.'/app/migrations',
 			PROJECT_DIR.'/static',
 		];
 

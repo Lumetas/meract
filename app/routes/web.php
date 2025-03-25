@@ -1,9 +1,9 @@
 <?php
-use LUM\core\Route;
-use LUM\core\Request;
-use LUM\core\Response;
-use LUM\core\OUTVAR;
-use LUM\core\Worker;
+use Lum\Core\Route;
+use Lum\Core\Request;
+use Lum\Core\Response;
+use Lum\Core\OUTVAR;
+use Lum\Core\Worker;
 use LUM\core\QRYLI;
 Route::get('/', function (Request $rq) {
 	QRYLI::insert("your_table", ["name" => "aaaaa"])->run();

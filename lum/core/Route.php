@@ -1,5 +1,5 @@
 <?php
-namespace LUM\core;
+namespace Lum\Core;
 class Route {
     private static $routes = [];
     private static $server;

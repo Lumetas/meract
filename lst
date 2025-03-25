@@ -1,7 +1,21 @@
 <?php
 
-// Подключаем автозагрузку Composer
 require __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/lum/core/RecursiveLoad.php';
+
+// Подключаем файлы core
+requireFilesRecursively(__DIR__ . '/lum/core');
+
+use Lum\Core\Database;
+$config = require "config.php";
+try {
+	$database = Database::getInstance($config['database']);
+	$pdo = $database->getPdo();
+} catch (Exception $e) {
+	throw new Exception("Проблема с базой данных, проверь config.php");
+}
+
+
 
 // Проверяем, что скрипт запущен из командной строки
 if (php_sapi_name() !== 'cli') {
@@ -26,10 +40,11 @@ if (!file_exists($commandFile)) {
 
 // Подключаем файл команды
 $command = require $commandFile;
-
+array_splice($argv, 0, 2);
+$argc -= 2;
 // Запускаем команду (предполагаем, что в файле команды есть функция run())
 try {
-	$command->run();
+	$command->run($argv, $argc);
 } catch (Exception $e) {
 	echo $e->getMessage()."\n";
 	exit();

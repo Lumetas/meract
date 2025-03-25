@@ -1,5 +1,5 @@
 <?php
-namespace LUM\core;
+namespace Lum\Core;
 abstract class Controller {
 	public static function prepare_html (string $html) : Response{
 		$r = new Response($html, 200);

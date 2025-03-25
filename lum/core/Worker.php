@@ -1,6 +1,6 @@
 <?php
-namespace LUM\core;
-use LUM\core\Model;
+namespace Lum\Core;
+use Lum\Core\Model;
 abstract class Worker
 {
     public static function register(string $name, string $message): void

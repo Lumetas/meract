@@ -1,6 +1,6 @@
 <?php
-use LUM\core\Storage;
-use LUM\core\QRYLI;
+use Lum\Core\Storage;
+use Lum\Core\QRYLI;
 return [
 	"server" => [
 		"host" => "0.0.0.0",

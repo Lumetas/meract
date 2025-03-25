@@ -1,6 +1,6 @@
 <?php
 
-use LUM\core\Worker;
+use Lum\Core\Worker;
 
 return new class extends Worker {
     public function run(string $message) {

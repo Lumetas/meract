@@ -1,5 +1,5 @@
 <?php
-namespace LUM\core;
+namespace Lum\Core;
 
 class OUTVAR {
     public static function dump(mixed $value) : string {
