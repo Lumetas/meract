@@ -1,26 +1,61 @@
 <?php
 namespace Lum\Core;
-class View {
-    private static $viewPath = 'app/views'; // Путь к директории с шаблонами
 
-    // Рендеринг шаблона
-    public static function render($template, $data = []) {
-        // Полный путь к файлу шаблона
-        $templatePath = self::$viewPath . '/' . $template . '.php';
+/**
+ * Класс для работы с представлениями (шаблонами).
+ *
+ * Обеспечивает:
+ * - Рендеринг PHP-шаблонов
+ * - Передачу данных в шаблоны
+ * - Буферизацию вывода
+ */
+class View
+{
+	/**
+	 * @var string Путь к директории с шаблонами
+	 */
+	private static $viewPath = 'app/views';
 
-        // Проверяем, существует ли файл шаблона
-        if (!file_exists($templatePath)) {
-            throw new Exception("Template file not found: $templatePath");
-        }
+	/**
+	 * Рендерит указанный шаблон с переданными данными.
+	 *
+	 * @param string $template Имя шаблона (без расширения .php)
+	 * @param array $data Ассоциативный массив данных для шаблона
+	 * @return string Содержимое отрендеренного шаблона
+	 * @throws Exception Если файл шаблона не найден
+	 *
+	 * @example
+	 * $html = View::render('home', ['title' => 'Главная страница']);
+	 */
+	public static function render(string $template, array $data = []): string
+	{
+		// Формируем полный путь к файлу шаблона
+		$templatePath = self::$viewPath . '/' . $template . '.php';
 
-        // Извлекаем данные в переменные
-        extract($data);
+		// Проверяем существование файла шаблона
+		if (!file_exists($templatePath)) {
+			throw new Exception("Template file not found: $templatePath");
+		}
 
-        // Начинаем буферизацию вывода
-        ob_start();
-        include $templatePath; // Включаем файл шаблона
-        $content = ob_get_clean(); // Получаем содержимое буфера
+		// Извлекаем переменные из массива данных
+		extract($data);
 
-        return $content;
-    }
+		// Включаем буферизацию вывода
+		ob_start();
+		include $templatePath;
+		$content = ob_get_clean();
+
+		return $content;
+	}
+
+	/**
+	 * Устанавливает новый путь к директории с шаблонами.
+	 *
+	 * @param string $path Абсолютный или относительный путь
+	 * @return void
+	 */
+	public static function setViewPath(string $path): void
+	{
+		self::$viewPath = rtrim($path, '/');
+	}
 }

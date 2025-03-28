@@ -1,184 +1,253 @@
 <?php
 namespace Lum\Core;
-use PDO;
-use PDOException;
 
+use pdo;
+use pdoexception;
+
+/**
+ * Абстрактный класс модели для работы с базой данных.
+ *
+ * Реализует базовые CRUD-операции и паттерн Active Record.
+ */
 abstract class Model
 {
-    // Имя таблицы в базе данных
-    protected static $table;
+	/**
+	 * @var string Имя таблицы в базе данных
+	 */
+	protected static $table;
 
-    // Первичный ключ таблицы (по умолчанию 'id')
-    protected $primaryKey = 'id';
+	/**
+	 * @var string Первичный ключ таблицы (по умолчанию 'id')
+	 */
+	protected $primarykey = 'id';
 
-    // Поля, которые можно массово назначать
-    protected $fillable = [];
+	/**
+	 * @var array Поля, доступные для массового назначения
+	 */
+	protected $fillable = [];
 
-    // Атрибуты модели
-    protected $attributes = [];
+	/**
+	 * @var array Атрибуты модели
+	 */
+	protected $attributes = [];
 
-    // Конструктор
-    public function __construct(array $attributes = [])
-    {
-        $this->fill($attributes);
-    }
+	/**
+	 * Конструктор модели.
+	 *
+	 * @param array $attributes Атрибуты для массового назначения
+	 */
+	public function __construct(array $attributes = [])
+	{
+		$this->fill($attributes);
+	}
 
-    // Заполнение атрибутов
-    public function fill(array $attributes)
-    {
-        foreach ($attributes as $key => $value) {
-            if (in_array($key, $this->fillable)) {
-                $this->attributes[$key] = $value;
-            }
-        }
-    }
+	/**
+	 * Заполняет атрибуты модели.
+	 *
+	 * @param array $attributes Массив атрибутов
+	 * @return void
+	 */
+	public function fill(array $attributes)
+	{
+		foreach ($attributes as $key => $value) {
+			if (in_array($key, $this->fillable)) {
+				$this->attributes[$key] = $value;
+			}
+		}
+	}
 
-    public static function first()
-    {
+	/**
+	 * Возвращает первую запись из таблицы.
+	 *
+	 * @return static|null Объект модели или null, если записей нет
+	 */
+	public static function first()
+	{
+		$pdo = self::getpdo();
+		$table = self::gettable();
 
-        $pdo = self::getPdo();
-        $table = self::getTable();
+		$stmt = $pdo->prepare("select id from {$table} order by id asc limit 1");
+		$stmt->execute();
+		$result = $stmt->fetch(pdo::fetch_assoc);
 
-        // Получаем id первой записи
-        $stmt = $pdo->prepare("SELECT id FROM {$table} ORDER BY id ASC LIMIT 1");
-        $stmt->execute();
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+		if ($result && isset($result['id'])) {
+			return static::find($result['id']);
+		}
+		return null;
+	}
 
-        if ($result && isset($result['id'])) {
-            // Используем метод find() для создания объекта модели
-            return static::find($result['id']);
-        }
-        return null;
-    }
+	/**
+	 * Возвращает последнюю запись из таблицы.
+	 *
+	 * @return static|null Объект модели или null, если записей нет
+	 */
+	public static function last()
+	{
+		$pdo = self::getpdo();
+		$table = self::gettable();
 
-    public static function last()
-    {
-        $pdo = self::getPdo();
-        $table = self::getTable();
+		$stmt = $pdo->prepare("select id from {$table} order by id desc limit 1");
+		$stmt->execute();
+		$result = $stmt->fetch(pdo::fetch_assoc);
 
-        // Получаем id последней записи
-        $stmt = $pdo->prepare("SELECT id FROM {$table} ORDER BY id DESC LIMIT 1");
-        $stmt->execute();
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+		if ($result && isset($result['id'])) {
+			return static::find($result['id']);
+		}
+		return null;
+	}
 
-        if ($result && isset($result['id'])) {
-            // Используем метод find() для создания объекта модели
-            return static::find($result['id']);
-        }
-        return null;
-    }
+	/**
+	 * Получает подключение к базе данных.
+	 *
+	 * @return PDO Объект PDO
+	 */
+	protected static function getpdo()
+	{
+		global $pdo;
+		return $pdo;
+	}
 
+	/**
+	 * Определяет имя таблицы для модели.
+	 *
+	 * @return string Имя таблицы
+	 */
+	protected static function gettable()
+	{
+		if (static::$table === null) {
+			$classname = (new \reflectionclass(static::class))->getshortname();
+			static::$table = strtolower($classname) . 's';
+		}
+		return static::$table;
+	}
 
-    // Получение подключения к базе данных
-    protected static function getPdo()
-    {
-        global $pdo; // Используем глобальную переменную с PDO
-        return $pdo;
-    }
+	/**
+	 * Находит запись по идентификатору.
+	 *
+	 * @param mixed $id Значение первичного ключа
+	 * @return static|null Объект модели или null, если запись не найдена
+	 */
+	public static function find($id)
+	{
+		$pdo = self::getpdo();
+		$table = self::gettable();
+		$stmt = $pdo->prepare("select * from {$table} where id = :id");
+		$stmt->execute(['id' => $id]);
+		$result = $stmt->fetch(pdo::fetch_assoc);
 
-    // Получение имени таблицы
-    protected static function getTable()
-    {
-        if (static::$table === null) {
-            // Если имя таблицы не задано, используем имя класса в нижнем регистре
-            $className = (new \ReflectionClass(static::class))->getShortName();
-            static::$table = strtolower($className) . 's'; // Например, User -> users
-        }
-        return static::$table;
-    }
+		if ($result) {
+			return new static($result);
+		}
+		return null;
+	}
 
-    // Поиск записи по ID
-    public static function find($id)
-    {
-        $pdo = self::getPdo();
-        $table = self::getTable();
-        $stmt = $pdo->prepare("SELECT * FROM {$table} WHERE id = :id");
-        $stmt->execute(['id' => $id]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+	/**
+	 * Возвращает все записи из таблицы.
+	 *
+	 * @return array Массив записей
+	 */
+	public static function all()
+	{
+		$pdo = self::getpdo();
+		$table = self::gettable();
+		$stmt = $pdo->query("select * from {$table}");
+		return $stmt->fetchall(pdo::fetch_assoc);
+	}
 
-        if ($result) {
-            return new static($result);
-        }
-        return null;
-    }
+	/**
+	 * Сохраняет модель (создает новую запись или обновляет существующую).
+	 *
+	 * @return void
+	 */
+	public function save()
+	{
+		if (isset($this->attributes[$this->primarykey])) {
+			$this->update();
+		} else {
+			$this->insert();
+		}
+	}
 
-    // Получение всех записей
-    public static function all()
-    {
-        $pdo = self::getPdo();
-        $table = self::getTable();
-        $stmt = $pdo->query("SELECT * FROM {$table}");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+	/**
+	 * Создает новую запись в базе данных.
+	 *
+	 * @return void
+	 */
+	protected function insert()
+	{
+		$pdo = self::getpdo();
+		$table = self::gettable();
 
-    // Сохранение модели (создание или обновление)
-    public function save()
-    {
-        if (isset($this->attributes[$this->primaryKey])) {
-            $this->update();
-        } else {
-            $this->insert();
-        }
-    }
+		$columns = implode(', ', array_keys($this->attributes));
+		$values = ':' . implode(', :', array_keys($this->attributes));
 
-    // Создание новой записи
-    protected function insert()
-    {
-        $pdo = self::getPdo();
-        $table = self::getTable();
+		$sql = "insert into {$table} ({$columns}) values ({$values})";
+		$stmt = $pdo->prepare($sql);
+		$stmt->execute($this->attributes);
 
-        $columns = implode(', ', array_keys($this->attributes));
-        $values = ':' . implode(', :', array_keys($this->attributes));
+		$this->attributes[$this->primarykey] = $pdo->lastinsertid();
+	}
 
-        $sql = "INSERT INTO {$table} ({$columns}) VALUES ({$values})";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($this->attributes);
+	/**
+	 * Обновляет существующую запись в базе данных.
+	 *
+	 * @return void
+	 */
+	protected function update()
+	{
+		$pdo = self::getpdo();
+		$table = self::gettable();
 
-        // Устанавливаем ID новой записи
-        $this->attributes[$this->primaryKey] = $pdo->lastInsertId();
-    }
+		$set = [];
+		foreach ($this->attributes as $key => $value) {
+			if ($key !== $this->primarykey) {
+				$set[] = "{$key} = :{$key}";
+			}
+		}
+		$set = implode(', ', $set);
 
-    // Обновление записи
-    protected function update()
-    {
-        $pdo = self::getPdo();
-        $table = self::getTable();
+		$sql = "update {$table} set {$set} where {$this->primarykey} = :{$this->primarykey}";
+		$stmt = $pdo->prepare($sql);
+		$stmt->execute($this->attributes);
+	}
 
-        $set = [];
-        foreach ($this->attributes as $key => $value) {
-            if ($key !== $this->primaryKey) {
-                $set[] = "{$key} = :{$key}";
-            }
-        }
-        $set = implode(', ', $set);
+	/**
+	 * Удаляет запись из базы данных.
+	 *
+	 * @return void
+	 */
+	public function delete()
+	{
+		$pdo = self::getpdo();
+		$table = self::gettable();
 
-        $sql = "UPDATE {$table} SET {$set} WHERE {$this->primaryKey} = :{$this->primaryKey}";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($this->attributes);
-    }
+		$sql = "delete from {$table} where {$this->primarykey} = :{$this->primarykey}";
+		$stmt = $pdo->prepare($sql);
+		$stmt->execute([$this->primarykey => $this->attributes[$this->primarykey]]);
+	}
 
-    // Удаление записи
-    public function delete()
-    {
-        $pdo = self::getPdo();
-        $table = self::getTable();
+	/**
+	 * Магический метод для доступа к атрибутам.
+	 *
+	 * @param string $name Имя атрибута
+	 * @return mixed Значение атрибута или null
+	 */
+	public function __get($name)
+	{
+		return $this->attributes[$name] ?? null;
+	}
 
-        $sql = "DELETE FROM {$table} WHERE {$this->primaryKey} = :{$this->primaryKey}";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([$this->primaryKey => $this->attributes[$this->primaryKey]]);
-    }
-
-    // Магический метод для доступа к атрибутам
-    public function __get($name)
-    {
-        return $this->attributes[$name] ?? null;
-    }
-
-    // Магический метод для установки атрибутов
-    public function __set($name, $value)
-    {
-        if (in_array($name, $this->fillable)) {
-            $this->attributes[$name] = $value;
-        }
-    }
+	/**
+	 * Магический метод для установки атрибутов.
+	 *
+	 * @param string $name Имя атрибута
+	 * @param mixed $value Значение атрибута
+	 * @return void
+	 */
+	public function __set($name, $value)
+	{
+		if (in_array($name, $this->fillable)) {
+			$this->attributes[$name] = $value;
+		}
+	}
 }

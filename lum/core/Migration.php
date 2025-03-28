@@ -1,15 +1,40 @@
 <?php
 namespace Lum\Core;
+
 use Lum\Core\Schema;
+
+/**
+ * Абстрактный класс миграции базы данных.
+ *
+ * Предоставляет базовую структуру для создания и отмены миграций.
+ */
 abstract class Migration
 {
+	/** @var Schema Экземпляр класса для работы со схемой базы данных */
 	protected Schema $schema;
 
-	public function setPdo(\PDO $pdo)
+	/**
+	 * Устанавливает соединение с базой данных.
+	 *
+	 * @param \PDO $pdo Объект PDO для работы с базой данных
+	 * @return void
+	 */
+	public function setPdo(\PDO $pdo): void
 	{
 		$this->schema = new Schema($pdo);
 	}
 
-	abstract public function up();
-	abstract public function down();
+	/**
+	 * Применяет миграцию.
+	 *
+	 * @return void
+	 */
+	abstract public function up(): void;
+
+	/**
+	 * Отменяет миграцию.
+	 *
+	 * @return void
+	 */
+	abstract public function down(): void;
 }

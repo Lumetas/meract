@@ -1,9 +1,1 @@
 /vendor/
-/db.sqlite
-/.vscode
-/app/controllets/*
-/app/core/*
-/app/models/*
-/app/views/*
-/app/workers/*
-/app/routes/*

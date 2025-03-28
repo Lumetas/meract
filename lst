@@ -1,51 +1,56 @@
 <?php
 
+// Инициализация
 require __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/lum/core/RecursiveLoad.php';
 
-// Подключаем файлы core
+// Подключаем основные классы
 requireFilesRecursively(__DIR__ . '/lum/core');
 
 use Lum\Core\Database;
-$config = require "config.php";
+
+// Загрузка конфигурации
+$config = require __DIR__ . '/config.php';
+
+// Инициализация базы данных
 try {
-	$database = Database::getInstance($config['database']);
-	$pdo = $database->getPdo();
+    $database = Database::getInstance($config['database']);
+    $pdo = $database->getPdo();
 } catch (Exception $e) {
-	throw new Exception("Проблема с базой данных, проверь config.php");
+    throw new Exception("Ошибка базы данных. Проверьте config.php: " . $e->getMessage());
 }
 
-
-
-// Проверяем, что скрипт запущен из командной строки
+// Проверка CLI-режима
 if (php_sapi_name() !== 'cli') {
-	die('This script can only be run from the command line.');
+    die("Этот скрипт можно запускать только из командной строки.\n");
 }
+
+// Константа с путем проекта
 define("PROJECT_DIR", __DIR__);
-// Проверяем, передан ли аргумент
+
+// Проверка аргументов
 if ($argc < 2) {
-	die("Usage: php console.php <command>\n");
+    die("Использование: php console.php <команда> [аргументы]\n");
 }
 
-// Получаем имя команды (первый аргумент)
+// Получаем команду
 $commandName = $argv[1];
-
-// Путь к файлу команды
 $commandFile = __DIR__ . "/lum/commands/{$commandName}.php";
 
-// Проверяем, существует ли файл команды
+// Проверка существования команды
 if (!file_exists($commandFile)) {
-	die("Error: Command '$commandName' not found.\n");
+    die("Ошибка: Команда '{$commandName}' не найдена.\n");
 }
 
-// Подключаем файл команды
-$command = require $commandFile;
-array_splice($argv, 0, 2);
-$argc -= 2;
-// Запускаем команду (предполагаем, что в файле команды есть функция run())
+// Подготовка аргументов
+$args = array_slice($argv, 2);
+$argsCount = count($args);
+
+// Запуск команды
 try {
-	$command->run($argv, $argc);
+    $command = require $commandFile;
+    $command->run($args, $argsCount);
 } catch (Exception $e) {
-	echo $e->getMessage()."\n";
-	exit();
+    echo "Ошибка: " . $e->getMessage() . "\n";
+    exit(1);
 }
