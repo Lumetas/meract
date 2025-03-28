@@ -376,3 +376,19 @@ array(4) {
   string(4) "arg3"
 }
 ```
+
+### make
+```
+php lst make <type> <name>
+```
+Так это создасть файл указанного типа с указанным названием, например:
+```
+php lst make model Test
+```
+Чтобы увидеть больше справки выполните `php lst make`
+
+### tests
+```
+php lst tests
+```
+Проводит unit тесты из папки `tests` с помощью `phpUnit`
