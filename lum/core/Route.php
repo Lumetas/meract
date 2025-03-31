@@ -9,66 +9,21 @@ namespace Lum\Core;
  * - Обработку динамических параметров в URL
  * - Обслуживание статических файлов
  * - Кастомные обработчики 404 ошибок
- * - Логирование запросов
+ * - middleware
+ * - groups
  */
-class Route 
+class Route
 {
-	/** @var array Массив зарегистрированных маршрутов */
 	private static $routes = [];
-
-	/** @var Server Экземпляр сервера */
-	private static $server;
-
-	/** @var callable Обработчик для 404 ошибок */
-	private static $notFoundCallback;
-
-	/** @var RequestLogger Логгер запросов */
-	private static $requestLogger;
-
-	/** @var string|null Путь к директории со статическими файлами */
+	private static $server = null;
+	private static $requestLogger = null;
 	private static $staticPath = null;
-
-	/**
-	 * Регистрирует GET-маршрут.
-	 *
-	 * @param string $path Путь маршрута (может содержать параметры в фигурных скобках)
-	 * @param callable $callback Функция-обработчик
-	 * @return void
-	 */
-	public static function get(string $path, callable $callback): void
-	{
-		self::$routes['GET'][$path] = $callback;
-	}
-
-	/**
-	 * Регистрирует POST-маршрут.
-	 *
-	 * @param string $path Путь маршрута (может содержать параметры в фигурных скобках)
-	 * @param callable $callback Функция-обработчик
-	 * @return void
-	 */
-	public static function post(string $path, callable $callback): void
-	{
-		self::$routes['POST'][$path] = $callback;
-	}
-
-	/**
-	 * Устанавливает обработчик для 404 ошибок.
-	 *
-	 * @param callable $callback Функция-обработчик
-	 * @return void
-	 */
-	public static function notFound(callable $callback): void
-	{
-		self::$notFoundCallback = $callback;
-	}
+	private static $notFoundCallback = null;
+	private static $globalMiddlewares = [];
+	private static $groupStack = [];
 
 	/**
 	 * Устанавливает сервер и логгер запросов.
-	 *
-	 * @param Server $server Экземпляр сервера
-	 * @param RequestLogger $requestLogger Логгер запросов
-	 * @return void
 	 */
 	public static function setServer(Server $server, RequestLogger $requestLogger): void
 	{
@@ -77,10 +32,7 @@ class Route
 	}
 
 	/**
-	 * Устанавливает путь к директории со статическими файлами.
-	 *
-	 * @param string $path Абсолютный путь к директории
-	 * @return void
+	 * Устанавливает путь к статическим файлам.
 	 */
 	public static function staticFolder(string $path): void
 	{
@@ -88,30 +40,140 @@ class Route
 	}
 
 	/**
-	 * Запускает обработку маршрутов.
-	 *
-	 * @param callable $onStartCallback Функция, вызываемая при старте сервера
-	 * @throws Exception Если сервер не был установлен
-	 * @return void
+	 * Устанавливает обработчик 404 ошибки.
+	 */
+	public static function notFound(callable $callback): void
+	{
+		self::$notFoundCallback = $callback;
+	}
+
+	/**
+	 * Регистрация GET-маршрута.
+	 */
+	public static function get(string $path, callable $callback, array $middlewares = []): void
+	{
+		self::addRoute('GET', $path, $callback, $middlewares);
+	}
+
+	/**
+	 * Регистрация POST-маршрута.
+	 */
+	public static function post(string $path, callable $callback, array $middlewares = []): void
+	{
+		self::addRoute('POST', $path, $callback, $middlewares);
+	}
+
+	/**
+	 * Добавление глобального Middleware.
+	 */
+	public static function middleware($middleware): void
+	{
+		if (is_callable($middleware)) {
+			self::$globalMiddlewares[] = $middleware;
+		} elseif (is_object($middleware) && method_exists($middleware, 'handle')) {
+			self::$globalMiddlewares[] = $middleware;
+		} else {
+			throw new \InvalidArgumentException("Middleware must be callable or implement handle() method");
+		}
+	}
+	/**
+	 * Группировка маршрутов с префиксом и Middleware.
+	 */
+	public static function group(string $prefix, callable $callback, array $middlewares = []): void
+	{
+		self::$groupStack[] = [
+			'prefix' => $prefix,
+			'middlewares' => $middlewares
+		];
+
+		$callback();
+
+		array_pop(self::$groupStack);
+	}
+
+	/**
+	 * Внутренний метод для добавления маршрута.
+	 */
+	private static function addRoute(string $method, string $path, callable $callback, array $middlewares = []): void
+	{
+		$fullPath = self::applyGroupPrefix($path);
+		$combinedMiddlewares = array_merge(
+			self::getGroupMiddlewares(),
+			$middlewares
+		);
+		$wrappedCallback = self::wrapWithMiddlewares($callback, $combinedMiddlewares);
+		self::$routes[$method][$fullPath] = $wrappedCallback;
+	}
+
+	/**
+	 * Применяет префикс группы к пути.
+	 */
+	private static function applyGroupPrefix(string $path): string
+	{
+		if (empty(self::$groupStack)) {
+			return $path;
+		}
+
+		$prefix = '';
+		foreach (self::$groupStack as $group) {
+			$prefix .= $group['prefix'];
+		}
+
+		return $prefix . $path;
+	}
+
+	/**
+	 * Возвращает Middleware текущей группы.
+	 */
+	private static function getGroupMiddlewares(): array
+	{
+		if (empty(self::$groupStack)) {
+			return [];
+		}
+
+		$middlewares = [];
+		foreach (self::$groupStack as $group) {
+			$middlewares = array_merge($middlewares, $group['middlewares']);
+		}
+
+		return $middlewares;
+	}
+
+	/**
+	 * Оборачивает callback в цепочку Middleware.
+	 */
+	private static function wrapWithMiddlewares(callable $handler, array $middlewares): callable
+	{
+		foreach (array_reverse($middlewares) as $middleware) {
+			$handler = function (Request $req, array $params = []) use ($middleware, $handler) {
+				return $middleware->handle($req, $handler, $params);
+			};
+		}
+		return $handler;
+	}
+	/**
+	 * Запуск обработки маршрутов.
 	 */
 	public static function startHandling(callable $onStartCallback): void
 	{
 		if (!self::$server) {
-			throw new Exception("Server is not set. Use Route::setServer() to set the server instance.");
+			throw new \Exception("Server not set. Use Route::setServer()");
 		}
 
 		$handler = function (Request $request) {
 			$method = $request->method;
 			$uri = $request->uri;
 
-			if ($uri == null) {
+			if ($uri === null) {
 				return null;
 			}
 
-			self::$requestLogger->handle($request);
+			if (self::$requestLogger) {
+				self::$requestLogger->handle($request);
+			}
 
 			// Обработка динамических маршрутов
-			foreach (self::$routes[$method] as $routePath => $callback) {
+			foreach (self::$routes[$method] ?? [] as $routePath => $callback) {
 				$pattern = preg_replace('/\{([a-z]+)\}/', '(?P<$1>[^/]+)', $routePath);
 				$pattern = "@^" . $pattern . "$@D";
 
@@ -123,7 +185,7 @@ class Route
 						}
 					}
 
-					return call_user_func($callback, $request, $routeData);
+					return $callback($request, $routeData);
 				}
 			}
 
@@ -146,14 +208,14 @@ class Route
 			return new Response("Not Found", 404);
 		};
 
-		self::$server->listen($handler, $onStartCallback);
+		// Применяем глобальные Middleware
+		$wrappedHandler = self::wrapWithMiddlewares($handler, self::$globalMiddlewares);
+
+		self::$server->listen($wrappedHandler, $onStartCallback);
 	}
 
 	/**
-	 * Определяет MIME-тип файла по его расширению.
-	 *
-	 * @param string $filePath Путь к файлу
-	 * @return string MIME-тип файла
+	 * Определяет MIME-тип файла.
 	 */
 	private static function getMimeType(string $filePath): string
 	{

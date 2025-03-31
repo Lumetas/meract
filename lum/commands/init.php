@@ -29,6 +29,7 @@ return new class
 			PROJECT_DIR.'/app/migrations',
 			PROJECT_DIR.'/static',
 			PROJECT_DIR.'/tests',
+			PROJECT_DIR.'/app/middleware'
 		];
 
 		// Файлы, которые должны быть созданы (если их нет)

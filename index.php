@@ -44,6 +44,7 @@ try {
 
 // Загрузка пользовательских компонентов
 requireFilesRecursively(__DIR__ . '/app/models');
+requireFilesRecursively(__DIR__ . '/app/middleware');
 requireFilesRecursively(__DIR__ . '/app/controllers');
 requireFilesRecursively(__DIR__ . '/app/routes');
 

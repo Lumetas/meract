@@ -90,6 +90,24 @@ Route::staticFolder("static");
 Route::notFound(function(Request $rq) {
 	return new Response('is a 404 error', 404);
 });
+
+Route::group('/admin', function () {
+    Route::get('/', function ($rq){return new Response('hello admin!', 200);});
+    Route::get('/test1', function ($rq){return new Response('hello admin test1!', 200);});
+    Route::get('/test2', function ($rq){return new Response('hello admin test2!', 200);});
+});
+
+Route::get('/', function ($rq) {
+	return new Response('hello world!', 200);
+}, [new FiftyFiftyMiddleware()]);
+
+Route::group('/admin', function () {
+    Route::get('/', function ($rq){return new Response('hello admin!', 200);});
+    Route::get('/test1', function ($rq){return new Response('hello admin test1!', 200);});
+    Route::get('/test2', function ($rq){return new Response('hello admin test2!', 200);});
+}, [new FiftyFiftyMiddleware()]);
+
+route::middleware(new FiftyFiftyMiddleware); //Глобальный middleware
 ```
 И контроллер используемый тут:
 ```
@@ -109,6 +127,25 @@ class IterateController extends Controller{
 	}
 }
 
+```
+А так же middleware:
+```
+use Lum\Core\Request;
+use Lum\Core\Response;
+
+class FiftyFiftyMiddleware
+{
+    public function handle(Request $request, callable $next): Response
+    {
+        if (mt_rand(0, 1) === 1) {
+            // Пропускаем запрос (50% шанс)
+            return $next($request);
+        }
+
+        // Блокируем запрос (50% шанс)
+        return new Response("Sorry, you lost the 50/50 chance", 403);
+    }
+}
 ```
 Мы можем передать в роутер путь, и коллбэк функцию, так же как и метода контроллера. Так же мы можем установить маршрут для ошибки 404 и директорию для статичных файлов.
 
