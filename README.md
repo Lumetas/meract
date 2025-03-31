@@ -346,6 +346,17 @@ $users = QRYLI::select('*')->from('users')->where('age > ?', [18])->orderBy('nam
 QRYLI::update('users', ['age' => 26])->where('id = ?', [1])->run();
 QRYLI::delete('users')->where('id = ?', [1])->run();
 ```
+## Session
+В общем случае использование сессий выглядит примерно так:
+```
+Route::get('/', function ($rq) {
+	$session = Session::start($rq);
+	if (isset($session->a)) { $session->a += 1; } else {$session->a = 0;}
+	
+	return $session->end(new Response($session->a, 200));
+});
+```
+Так вы можете устанавливать любые параметры любого типа. Сохранятся они будут с помощью `Storage` Так что не забывайте чистить истёкшие записи перед участками работы с сессиями.
 
 ## Миграции
 Фреймворк обладает базовым функционалом миграций.
@@ -382,7 +393,6 @@ php lst migrate fist_migration # Миграция "first_migration"
 php lst migrate.rollback # Все миграции
 php lst migrate.rollback fist_migration # Миграция "first_migration"
 ```
-
 
 ## lst
 `lst` или `lum support tool` средство помощи.

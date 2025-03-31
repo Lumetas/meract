@@ -154,7 +154,7 @@ class Route
 	/**
 	 * Запуск обработки маршрутов.
 	 */
-	public static function startHandling(callable $onStartCallback): void
+	public static function startHandling(callable $onStartCallback): null
 	{
 		if (!self::$server) {
 			throw new \Exception("Server not set. Use Route::setServer()");
@@ -164,7 +164,7 @@ class Route
 			$method = $request->method;
 			$uri = $request->uri;
 
-			if ($uri === null) {
+			if ($uri === null || trim($uri) == "") {
 				return null;
 			}
 

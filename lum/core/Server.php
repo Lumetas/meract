@@ -87,7 +87,6 @@ class Server
 		{
 			// ожидаем соединений
 			socket_listen( $this->socket );
-
 			// пытаемся получить ресурс сокета клиента
 			// если false, произошла ошибка, закрываем соединение и продолжаем
 			if ( !$client = socket_accept( $this->socket ) ) 
