@@ -3,10 +3,16 @@
 	"description": "Lightweight PHP framework",
 	"scripts": {
 		"post-install-cmd": [
-			"@php lst init"
+			"@php lst init",
+			"@php lst migrate"
 		],
 		"post-update-cmd": [
-			"@php lst init"
+			"@php lst init",
+			"@php lst migrate"
+		],
+		"post-package-install" : [
+			"@php lst init",
+			"@php lst migrate"
 		]
 	},
 	"type": "project",
