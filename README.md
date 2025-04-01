@@ -47,9 +47,8 @@ return [
 
 ## Установка
 ```
-git clone https://github.com/Lumetas/lum_framework.git;
-cd lum_framework;
-composer install;
+composer create-project lumetas/framework project-name
+cd project-name;
 php lst init;
 ```
 

@@ -1,43 +1,51 @@
 {
-    "name": "lumetas/framework",
-    "description": "Lightweight PHP framework",
-    "type": "project",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "lumetas",
-            "role": "Developer"
-        }
-    ],
-    "require": {
-        "php": "^8.0",
-        "ext-pdo": "*"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^9.5",
-        "symfony/process": "^5.4",
-        "mockery/mockery": "^1.5"
-    },
-    "autoload": {
-        "psr-4": {
-            "Lum\\Core\\": "lum/core/",
-            "Lum\\Commands\\": "lum/commands/",
-            "App\\": "app/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Tests\\": "tests/"
-        }
-    },
-    "scripts": {
-        "test": "phpunit",
-        "test-coverage": "phpunit --coverage-html coverage"
-    },
-    "config": {
-        "sort-packages": true,
-        "optimize-autoloader": true
-    },
-    "minimum-stability": "stable",
-    "prefer-stable": true
+	"name": "lumetas/framework",
+	"description": "Lightweight PHP framework",
+	"scripts": {
+		"post-install-cmd": [
+			"@php lst init"
+		],
+		"post-update-cmd": [
+			"@php lst init"
+		]
+	},
+	"type": "project",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "lumetas",
+			"role": "Developer"
+		}
+	],
+	"require": {
+		"php": "^8.0",
+		"ext-pdo": "*"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "^9.5",
+		"symfony/process": "^5.4",
+		"mockery/mockery": "^1.5"
+	},
+	"autoload": {
+		"psr-4": {
+			"Lum\\Core\\": "lum/core/",
+			"Lum\\Commands\\": "lum/commands/",
+			"App\\": "app/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"Tests\\": "tests/"
+		}
+	},
+	"scripts": {
+		"test": "phpunit",
+		"test-coverage": "phpunit --coverage-html coverage"
+	},
+	"config": {
+		"sort-packages": true,
+		"optimize-autoloader": true
+	},
+	"minimum-stability": "stable",
+	"prefer-stable": true
 }
