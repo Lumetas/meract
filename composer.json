@@ -13,6 +13,10 @@
 		"post-package-install" : [
 			"@php lst init",
 			"@php lst migrate"
+		],
+		"post-create-project-cmd" : [
+			"@php lst init",
+			"@php lst migrate"
 		]
 	},
 	"type": "project",
